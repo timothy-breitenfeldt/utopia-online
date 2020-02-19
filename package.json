@@ -1,0 +1,25 @@
+{
+  "name": "utopia-online",
+  "version": "1.0.0",
+  "description": "This microservice handles requests from a user to book or cancel reservations through the online portal.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timothy-breitenfeldt/utopia-online.git"
+  },
+  "keywords": [
+    "utopia",
+    "airline",
+    "online",
+    "travelers"
+  ],
+  "author": "Timothy Breitenfeldt",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/timothy-breitenfeldt/utopia-online/issues"
+  },
+  "homepage": "https://github.com/timothy-breitenfeldt/utopia-online#readme"
+}

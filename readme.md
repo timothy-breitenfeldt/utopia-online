@@ -26,3 +26,11 @@ dbConfig:
   database: ""
 ```
 
+#### Running with a Profile
+To run the application, you first have to create an environment variable called NODE_ENV, and set its value equal to the profile name minus the extention.  
+So you might runthe commands:
+
+```
+$ export NODE_ENV=production
+$ node my-app.js
+```

@@ -19,18 +19,20 @@ The default.yaml file can be empty, but the other profiles cannot. The structure
 
 ```
 ---
-dbConfig:
-  host: ""
-  user: ""
-  password: ""
-  database: ""
+server:
+  port: 8080
+  dbConfig:
+    host: ""
+    user: ""
+    password: ""
+    database: ""
 ```
 
 #### Running with a Profile
 To run the application, you first have to create an environment variable called NODE_ENV, and set its value equal to the profile name minus the extention.  
-So you might runthe commands:
+So you might run the commands:
 
 ```
-$ export NODE_ENV=production
-$ node my-app.js
+export NODE_ENV=production
+node my-app.js
 ```

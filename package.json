@@ -4,6 +4,7 @@
   "description": "This microservice handles requests from a user to book or cancel reservations through the online portal.",
   "main": "index.js",
   "dependencies": {
+    "config": "^3.2.5",
     "express": "^4.17.1",
     "mysql": "^2.18.1"
   },

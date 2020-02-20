@@ -3,7 +3,13 @@
   "version": "1.0.0",
   "description": "This microservice handles requests from a user to book or cancel reservations through the online portal.",
   "main": "index.js",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {},
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

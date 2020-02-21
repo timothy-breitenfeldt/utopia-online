@@ -5,9 +5,9 @@ const config = require("config");
 
 function getItineraries() {
   return new Promise(function(resolve, reject) {
-    const sql = "SELECT * FROM itinerary;";
-    db.connection.query(sql, function(err, result) {
-      return err ? reject(err) : resolve(result);
+    const sql = "SELECT * FROM itinerary";
+    db.connection.query(sql, function(error, result) {
+      return error ? reject(error) : resolve(result);
     });
   });
 }

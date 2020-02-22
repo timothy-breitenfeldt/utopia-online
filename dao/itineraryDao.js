@@ -23,7 +23,11 @@ function getItineraries() {
 
 function createItinerary(itinerary) {
   return new Promise(function(resolve, reject) {
-    db.connection.beginTransaction(async function(err) {
+    db.connection.beginTransaction(async function(transactionError) {
+      if (transactionError) {
+        return reject(transactionError);
+      }
+
       try {
         let commissionRate = null;
 
@@ -55,7 +59,9 @@ function createItinerary(itinerary) {
         );
 
         db.connection.commit(function(transactionError, result) {
-          return err ? reject(err) : resolve({ id: itineraryId });
+          return transactionError
+            ? reject(transactionError)
+            : resolve({ id: itineraryId });
         });
       } catch (error) {
         db.connection.rollback(function(transactionError, result) {

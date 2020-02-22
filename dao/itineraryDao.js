@@ -12,7 +12,7 @@ function getItineraries() {
   });
 }
 
-async function createItinerary(itinerary) {
+function createItinerary(itinerary) {
   return new Promise(function(resolve, reject) {
     db.connection.beginTransaction(async function(err) {
       try {

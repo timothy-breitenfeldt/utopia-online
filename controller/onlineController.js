@@ -25,4 +25,15 @@ routes.post("/online/itineraries", async function(request, response, next) {
   }
 });
 
+routes.post("/online/flights/search", async function(request, response, next) {
+  try {
+    const searchParameters = request.body;
+    const flights = await onlineService.getFlights(searchParameters);
+    response.status(200);
+    response.send(flights);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 module.exports = routes;

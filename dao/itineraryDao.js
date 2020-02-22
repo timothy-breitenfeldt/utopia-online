@@ -50,6 +50,10 @@ function createItinerary(itinerary) {
         const itineraryId = lastInsertedData.id;
         await _createTickets(itinerary.tickets, itineraryId);
 
+        await decrementFlightCapacities(
+          itinerary.tickets.map(t => t.flight_number)
+        );
+
         db.connection.commit(function(transactionError, result) {
           return err ? reject(err) : resolve({ id: itineraryId });
         });
@@ -124,6 +128,23 @@ function _createTickets(tickets, itineraryId) {
       );
     });
     promises.push(ticketPromice);
+  }
+
+  return Promise.all(promises);
+}
+
+function decrementFlightCapacities(flights) {
+  const sql = "UPDATE flight SET capacity = capacity-1 WHERE id = ?;";
+  const promises = [];
+
+  for (let flightNumber of flights) {
+    let promise = new Promise(function(resolve, reject) {
+      db.connection.query(sql, [flightNumber], function(error, result) {
+        return error ? reject(error) : resolve(result);
+      });
+    });
+
+    promises.push(promise);
   }
 
   return Promise.all(promises);

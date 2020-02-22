@@ -2,6 +2,7 @@
 
 const itineraryDao = require("../dao/itineraryDao");
 const flightDao = require("../dao/flightDao");
+const ticketDao = require("../dao/ticketDao");
 
 function getItinerary(itineraryId) {
   return itineraryDao.getItinerary(itineraryId);
@@ -28,9 +29,14 @@ function getFlights(searchParameters) {
   return flightDao.getFlights(searchParameters);
 }
 
+function getTicketsByItineraryId(itineraryId) {
+  return ticketDao.getTicketsByItineraryId(itineraryId);
+}
+
 module.exports = {
   getItinerary: getItinerary,
   getItineraries: getItineraries,
   createItinerary: createItinerary,
-  getFlights: getFlights
+  getFlights: getFlights,
+  getTicketsByItineraryId: getTicketsByItineraryId
 };

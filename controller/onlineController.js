@@ -47,4 +47,19 @@ routes.post("/online/flights/search", async function(request, response, next) {
   }
 });
 
+routes.get("/online/tickets/itineraries/:id", async function(
+  request,
+  response,
+  next
+) {
+  try {
+    const itineraryId = request.params.id;
+    const tickets = await onlineService.getTicketsByItineraryId(itineraryId);
+    response.status(200);
+    response.send(tickets);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 module.exports = routes;

@@ -3,6 +3,15 @@
 const db = require("./db");
 const config = require("config");
 
+function getItinerary(itineraryId) {
+  return new Promise(function(resolve, reject) {
+    const sql = "SELECT * FROM itinerary WHERE id = ?;";
+    db.connection.query(sql, [itineraryId], function(error, result) {
+      return error ? reject(error) : resolve(result);
+    });
+  });
+}
+
 function getItineraries() {
   return new Promise(function(resolve, reject) {
     const sql = "SELECT * FROM itinerary";
@@ -117,6 +126,7 @@ function _createTickets(tickets, itineraryId) {
 }
 
 module.exports = {
+  getItinerary: getItinerary,
   getItineraries: getItineraries,
   createItinerary: createItinerary
 };

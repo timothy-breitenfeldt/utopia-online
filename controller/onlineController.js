@@ -14,6 +14,17 @@ routes.get("/online/itineraries", async function(request, response, next) {
   }
 });
 
+routes.get("/online/itineraries/:id", async function(request, response, next) {
+  try {
+    const itineraryId = request.params.id;
+    const itinerary = await onlineService.getItinerary(itineraryId);
+    response.status(200);
+    response.send(itinerary);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 routes.post("/online/itineraries", async function(request, response, next) {
   try {
     const itinerary = request.body;

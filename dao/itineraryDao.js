@@ -74,7 +74,7 @@ function _getCommissionRate(agencyId) {
 function _calculatePrice(ticketPrices, commissionRate) {
   let total = 0;
   let subtotal = 0;
-  const tax = config.get("application.salesTax");
+  let tax = 0.0;
 
   for (let price of ticketPrices) {
     subtotal += price;
@@ -86,7 +86,11 @@ function _calculatePrice(ticketPrices, commissionRate) {
     total += subtotal * commissionRate;
   }
 
-  total += subtotal * tax;
+  if (config.has("application.salesTax")) {
+    tax = config.get("application.salesTax");
+    total += subtotal * tax;
+  }
+
   return parseFloat(total.toFixed(2), 10); //round the number to exactly 2 decimal places, and cast back to a float
 }
 

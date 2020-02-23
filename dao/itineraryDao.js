@@ -42,8 +42,9 @@ function createItinerary(itinerary) {
       const itineraryId = lastInsertedData.id;
       await _createTickets(itinerary.tickets, itineraryId);
 
-      await decrementFlightCapacities(
-        itinerary.tickets.map(t => t.flight_number)
+      await _modifyFlightCapacities(
+        itinerary.tickets.map(t => t.flight_number),
+        "DECREMENT"
       );
 
       await db.connection.commit();
@@ -124,23 +125,6 @@ function _createTickets(tickets, itineraryId) {
   return Promise.all(promises);
 }
 
-function decrementFlightCapacities(flights) {
-  const promises = [];
-  const sql = "UPDATE flight SET capacity = capacity-1 WHERE id = ?;";
-
-  for (let flightNumber of flights) {
-    let promise = new Promise(function(resolve, reject) {
-      db.connection.query(sql, [flightNumber], function(error, result) {
-        return error ? reject(error) : resolve(result);
-      });
-    });
-
-    promises.push(promise);
-  }
-
-  return Promise.all(promises);
-}
-
 function getItinerary(itineraryId) {
   return new Promise(function(resolve, reject) {
     const sql = "SELECT * FROM itinerary WHERE id = ?;";
@@ -157,6 +141,9 @@ function cancelItinerary(itineraryId) {
 
       await db.connection.beginTransaction();
       await db.connection.query(sql, [itineraryId]);
+
+      const flights = await _getFlightNumbers(itineraryId);
+      await _modifyFlightCapacities(flights, "INCREMENT");
       await db.connection.commit();
       return resolve();
     } catch (error) {
@@ -165,6 +152,42 @@ function cancelItinerary(itineraryId) {
       });
     }
   });
+}
+
+function _getFlightNumbers(itineraryId) {
+  return new Promise(function(resolve, reject) {
+    const sql =
+      "SELECT flight_number FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE i.id = ?";
+
+    db.connection.query(sql, [itineraryId], function(error, result) {
+      return error ? reject(error) : resolve(result.map(v => v.flight_number));
+    });
+  });
+}
+
+function _modifyFlightCapacities(flights, flag) {
+  const promises = [];
+  let sql = "";
+
+  if (flag == "INCREMENT") {
+    sql = "UPDATE flight SET capacity = capacity+1 WHERE id = ?;";
+  } else if (flag == "DECREMENT") {
+    sql = "UPDATE flight SET capacity = capacity-1 WHERE id = ?;";
+  } else {
+    throw new Error("Invalid value for flag, must be increment or decrement");
+  }
+
+  for (let flightNumber of flights) {
+    let promise = new Promise(function(resolve, reject) {
+      db.connection.query(sql, [flightNumber], function(error, result) {
+        return error ? reject(error) : resolve(result);
+      });
+    });
+
+    promises.push(promise);
+  }
+
+  return Promise.all(promises);
 }
 
 module.exports = {

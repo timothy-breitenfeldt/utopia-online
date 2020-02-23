@@ -82,7 +82,7 @@ function cancelItinerary(itineraryId) {
 
 function getFlights(searchParameters) {
   const expected = [
-    "flight_id",
+    "flight_number",
     "airport_id",
     "departure_date",
     "arrival_date",

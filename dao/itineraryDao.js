@@ -5,7 +5,8 @@ const config = require("config");
 
 function getItineraries() {
   return new Promise(function(resolve, reject) {
-    const sql = "SELECT * FROM itinerary";
+    const sql =
+      "SELECT i.id, traveler_id, user_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE t.status = 'ACTIVE';";
     db.connection.query(sql, function(error, result) {
       return error ? reject(error) : resolve(result);
     });
@@ -127,7 +128,9 @@ function _createTickets(tickets, itineraryId) {
 
 function getItinerary(itineraryId) {
   return new Promise(function(resolve, reject) {
-    const sql = "SELECT * FROM itinerary WHERE id = ?;";
+    const sql =
+      "SELECT i.id, traveler_id, user_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE i.id = ? and t.status = 'ACTIVE';";
+
     db.connection.query(sql, [itineraryId], function(error, result) {
       return error ? reject(error) : resolve(result);
     });

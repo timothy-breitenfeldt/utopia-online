@@ -22,4 +22,18 @@ describe("onlineController", () => {
     `;
     db.connection.query(sql, error => done());
   });
+
+  describe("/POST /flights/search", () => {
+    it("it should get all of the flights", done => {
+      chai
+        .request(server)
+        .get("/online/flights/search")
+        .end((error, result) => {
+          result.should.have.status(200);
+          result.body.should.be.a("array");
+          result.body.length.should.be.eql(0);
+          done();
+        });
+    });
+  });
 });

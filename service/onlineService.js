@@ -5,20 +5,6 @@ const flightDao = require("../dao/flightDao");
 const ticketDao = require("../dao/ticketDao");
 const ApplicationError = require("../errors/applicationError");
 
-function getItinerary(itineraryId) {
-  if (isNaN(itineraryId)) {
-    throw new ApplicationError(400, "Itinerary ID must be a number");
-  }
-  if (itineraryId <= 0) {
-    throw new ApplicationError(
-      400,
-      "Itinerary ID cannot be less than or equal to 0"
-    );
-  }
-
-  return itineraryDao.getItinerary(itineraryId);
-}
-
 function getItineraries() {
   return itineraryDao.getItineraries();
 }
@@ -66,6 +52,34 @@ function createItinerary(itinerary) {
   return itineraryDao.createItinerary(itinerary);
 }
 
+function getItinerary(itineraryId) {
+  if (isNaN(itineraryId)) {
+    throw new ApplicationError(400, "Itinerary ID must be a number");
+  }
+  if (itineraryId <= 0) {
+    throw new ApplicationError(
+      400,
+      "Itinerary ID cannot be less than or equal to 0"
+    );
+  }
+
+  return itineraryDao.getItinerary(itineraryId);
+}
+
+function cancelItinerary(itineraryId) {
+  if (isNaN(itineraryId)) {
+    throw new ApplicationError(400, "Itinerary ID must be a number");
+  }
+  if (itineraryId <= 0) {
+    throw new ApplicationError(
+      400,
+      "Itinerary ID cannot be less than or equal to 0"
+    );
+  }
+
+  return itineraryDao.cancelItinerary(itineraryId);
+}
+
 function getFlights(searchParameters) {
   const expected = [
     "flight_id",
@@ -105,9 +119,10 @@ function getTicketsByItineraryId(itineraryId) {
 }
 
 module.exports = {
-  getItinerary,
   getItineraries,
   createItinerary,
+  getItinerary,
+  cancelItinerary,
   getFlights,
   getTicketsByItineraryId
 };

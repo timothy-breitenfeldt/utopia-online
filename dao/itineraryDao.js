@@ -3,15 +3,6 @@
 const db = require("./db");
 const config = require("config");
 
-function getItinerary(itineraryId) {
-  return new Promise(function(resolve, reject) {
-    const sql = "SELECT * FROM itinerary WHERE id = ?;";
-    db.connection.query(sql, [itineraryId], function(error, result) {
-      return error ? reject(error) : resolve(result);
-    });
-  });
-}
-
 function getItineraries() {
   return new Promise(function(resolve, reject) {
     const sql = "SELECT * FROM itinerary";
@@ -22,53 +13,46 @@ function getItineraries() {
 }
 
 function createItinerary(itinerary) {
-  return new Promise(function(resolve, reject) {
-    db.connection.beginTransaction(async function(transactionError) {
-      if (transactionError) {
-        return reject(transactionError);
+  return new Promise(async function(resolve, reject) {
+    try {
+      await db.connection.beginTransaction();
+
+      let commissionRate = null;
+
+      if (itinerary.agency_id != null) {
+        const commissionRateData = await _getCommissionRate(
+          itinerary.agency_id
+        );
+        commissionRate = commissionRateData[0].commission_rate;
       }
 
-      try {
-        let commissionRate = null;
+      const totalPrice = _calculatePrice(
+        itinerary.tickets.map(v => v.price),
+        commissionRate
+      );
 
-        if (itinerary.agency_id != null) {
-          const commissionRateData = await _getCommissionRate(
-            itinerary.agency_id
-          );
-          commissionRate = commissionRateData[0].commission_rate;
-        }
+      await _createItinerary(
+        itinerary.traveler_id,
+        itinerary.user_id,
+        itinerary.agency_id,
+        totalPrice
+      );
 
-        const totalPrice = _calculatePrice(
-          itinerary.tickets.map(v => v.price),
-          commissionRate
-        );
+      const lastInsertedData = await db.getLastInsertedId();
+      const itineraryId = lastInsertedData.id;
+      await _createTickets(itinerary.tickets, itineraryId);
 
-        await _createItinerary(
-          itinerary.traveler_id,
-          itinerary.user_id,
-          itinerary.agency_id,
-          totalPrice
-        );
+      await decrementFlightCapacities(
+        itinerary.tickets.map(t => t.flight_number)
+      );
 
-        const lastInsertedData = await db.getLastInsertedId();
-        const itineraryId = lastInsertedData.id;
-        await _createTickets(itinerary.tickets, itineraryId);
-
-        await decrementFlightCapacities(
-          itinerary.tickets.map(t => t.flight_number)
-        );
-
-        db.connection.commit(function(transactionError, result) {
-          return transactionError
-            ? reject(transactionError)
-            : resolve({ id: itineraryId });
-        });
-      } catch (error) {
-        db.connection.rollback(function(transactionError, result) {
-          return result ? reject(error) : reject(transactionError);
-        });
-      }
-    });
+      await db.connection.commit();
+      return resolve({ id: itineraryId });
+    } catch (error) {
+      db.connection.rollback(function(transactionError, result) {
+        return result ? reject(error) : reject(transactionError);
+      });
+    }
   });
 }
 
@@ -120,11 +104,11 @@ function _createItinerary(travelerId, userId, agencyId, totalPrice) {
 
 function _createTickets(tickets, itineraryId) {
   const promises = [];
+  const sql =
+    "INSERT INTO ticket (flight_number, itinerary_id, status, seat_number) VALUES(?, ?, ?, ?);";
 
   for (let ticket of tickets) {
     let ticketPromice = new Promise(function(resolve, reject) {
-      const sql =
-        "INSERT INTO ticket (flight_number, itinerary_id, status, seat_number) VALUES(?, ?, ?, ?);";
       db.connection.query(
         sql,
         [ticket.flight_number, itineraryId, "ACTIVE", ticket.seat_number],
@@ -133,6 +117,7 @@ function _createTickets(tickets, itineraryId) {
         }
       );
     });
+
     promises.push(ticketPromice);
   }
 
@@ -140,8 +125,8 @@ function _createTickets(tickets, itineraryId) {
 }
 
 function decrementFlightCapacities(flights) {
-  const sql = "UPDATE flight SET capacity = capacity-1 WHERE id = ?;";
   const promises = [];
+  const sql = "UPDATE flight SET capacity = capacity-1 WHERE id = ?;";
 
   for (let flightNumber of flights) {
     let promise = new Promise(function(resolve, reject) {
@@ -156,8 +141,35 @@ function decrementFlightCapacities(flights) {
   return Promise.all(promises);
 }
 
+function getItinerary(itineraryId) {
+  return new Promise(function(resolve, reject) {
+    const sql = "SELECT * FROM itinerary WHERE id = ?;";
+    db.connection.query(sql, [itineraryId], function(error, result) {
+      return error ? reject(error) : resolve(result);
+    });
+  });
+}
+
+function cancelItinerary(itineraryId) {
+  return new Promise(async function(resolve, reject) {
+    try {
+      const sql = "UPDATE ticket SET status='CANCELED' WHERE itinerary_id = ?;";
+
+      await db.connection.beginTransaction();
+      await db.connection.query(sql, [itineraryId]);
+      await db.connection.commit();
+      return resolve();
+    } catch (error) {
+      db.connection.rollback(function(transactionError, result) {
+        return result ? reject(error) : reject(transactionError);
+      });
+    }
+  });
+}
+
 module.exports = {
-  getItinerary,
   getItineraries,
-  createItinerary
+  createItinerary,
+  getItinerary,
+  cancelItinerary
 };

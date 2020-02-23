@@ -15,6 +15,18 @@ routes.get("/online/itineraries", async function(request, response, next) {
   }
 });
 
+routes.post("/online/itineraries", async function(request, response, next) {
+  try {
+    const itinerary = request.body;
+    const id = await onlineService.createItinerary(itinerary);
+    response.status(201);
+    response.send(id);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
 routes.get("/online/itineraries/:id", async function(request, response, next) {
   try {
     const itineraryId = request.params.id;
@@ -27,12 +39,15 @@ routes.get("/online/itineraries/:id", async function(request, response, next) {
   }
 });
 
-routes.post("/online/itineraries", async function(request, response, next) {
+routes.delete("/online/itineraries/:id", async function(
+  request,
+  response,
+  next
+) {
   try {
-    const itinerary = request.body;
-    const id = await onlineService.createItinerary(itinerary);
-    response.status(201);
-    response.send(id);
+    const itineraryId = request.params.id;
+    await onlineService.cancelItinerary(itineraryId);
+    response.status(204).send();
     next();
   } catch (error) {
     next(error);

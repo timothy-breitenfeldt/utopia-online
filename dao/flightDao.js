@@ -32,8 +32,6 @@ function getFlights(searchParameters) {
         FROM flight JOIN airport ON flight.origin = airport.id
         WHERE capacity > 0 AND ${conditions};
       `;
-      console.log(JSON.stringify(parameters));
-      console.log(sql);
 
       db.connection.query(sql, parameters, function(error, result) {
         return error ? reject(error) : resolve(result);

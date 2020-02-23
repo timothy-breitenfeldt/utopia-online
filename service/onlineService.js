@@ -3,7 +3,7 @@
 const itineraryDao = require("../dao/itineraryDao");
 const flightDao = require("../dao/flightDao");
 const ticketDao = require("../dao/ticketDao");
-const ApplicationError = require("../errors/applicationError");
+const ApplicationError = require("../error/applicationError");
 
 function getItinerary(itineraryId) {
   if (isNaN(itineraryId)) {

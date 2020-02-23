@@ -12,5 +12,5 @@ function getTicketsByItineraryId(itineraryId) {
 }
 
 module.exports = {
-  getTicketsByItineraryId: getTicketsByItineraryId
+  getTicketsByItineraryId
 };

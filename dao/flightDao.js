@@ -43,5 +43,5 @@ function getFlights(searchParameters) {
 }
 
 module.exports = {
-  getFlights: getFlights
+  getFlights
 };

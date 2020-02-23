@@ -9,8 +9,9 @@ routes.get("/online/itineraries", async function(request, response, next) {
     const itineraries = await onlineService.getItineraries();
     response.status(200);
     response.send(itineraries);
+    next();
   } catch (error) {
-    return next(error);
+    next(error);
   }
 });
 
@@ -20,8 +21,9 @@ routes.get("/online/itineraries/:id", async function(request, response, next) {
     const itinerary = await onlineService.getItinerary(itineraryId);
     response.status(200);
     response.send(itinerary);
+    next();
   } catch (error) {
-    return next(error);
+    next(error);
   }
 });
 
@@ -31,8 +33,9 @@ routes.post("/online/itineraries", async function(request, response, next) {
     const id = await onlineService.createItinerary(itinerary);
     response.status(201);
     response.send(id);
+    next();
   } catch (error) {
-    return next(error);
+    next(error);
   }
 });
 
@@ -42,8 +45,9 @@ routes.post("/online/flights/search", async function(request, response, next) {
     const flights = await onlineService.getFlights(searchParameters);
     response.status(200);
     response.send(flights);
+    next();
   } catch (error) {
-    return next(error);
+    next(error);
   }
 });
 
@@ -57,8 +61,9 @@ routes.get("/online/tickets/itineraries/:id", async function(
     const tickets = await onlineService.getTicketsByItineraryId(itineraryId);
     response.status(200);
     response.send(tickets);
+    next();
   } catch (error) {
-    return next(error);
+    next(error);
   }
 });
 

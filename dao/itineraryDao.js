@@ -157,7 +157,7 @@ function decrementFlightCapacities(flights) {
 }
 
 module.exports = {
-  getItinerary: getItinerary,
-  getItineraries: getItineraries,
-  createItinerary: createItinerary
+  getItinerary,
+  getItineraries,
+  createItinerary
 };

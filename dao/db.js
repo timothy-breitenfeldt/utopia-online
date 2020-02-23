@@ -16,6 +16,6 @@ function getLastInsertedId() {
 }
 
 module.exports = {
-  connection: connection,
-  getLastInsertedId: getLastInsertedId
+  connection,
+  getLastInsertedId
 };

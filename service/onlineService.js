@@ -88,7 +88,6 @@ function getFlights(searchParameters) {
     "arrival_date",
     "dest",
     "origin",
-    "capasity",
     "price"
   ];
 

@@ -12,7 +12,7 @@ const should = chai.should();
 
 chai.use(chaiHttp);
 
-describe("onlineController", () => {
+describe("/online/flights/search", () => {
   afterEach(done => {
     const sql = `
   SET FOREIGN_KEY_CHECKS=0;

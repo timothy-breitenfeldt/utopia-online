@@ -5,8 +5,8 @@ const db = require("./db");
 function getFlights(searchParameters) {
   return new Promise(function(resolve, reject) {
     if (Object.keys(searchParameters).length === 0) {
-      const sql = `SELECT flight.id as flight_number, airport.id as airport_id, airport.name airport_name, flight.capacity, flight.price, flight.departure_date, flight.arrival_date
-        FROM flight JOIN airport ON flight.origin = airport.id;`;
+      const sql = `SELECT flight.id as flight_number, airport.id as airport_id, airport.name airport_name, flight.capacity, flight.price, flight.departure_date, flight.arrival_date, dest, origin
+      FROM flight JOIN airport ON flight.origin = airport.id;`;
       db.connection.query(sql, function(error, result) {
         return error ? reject(error) : resolve(result);
       });
@@ -33,7 +33,7 @@ function getFlights(searchParameters) {
         })
         .join(" and ");
 
-      const sql = `SELECT flight.id as flight_number, airport.id as airport_id, airport.name airport_name, flight.capacity, flight.price, flight.departure_date, flight.arrival_date
+      const sql = `SELECT flight.id as flight_number, airport.id as airport_id, airport.name airport_name, flight.capacity, flight.price, flight.departure_date, flight.arrival_date, dest, origin
         FROM flight JOIN airport ON flight.origin = airport.id
         WHERE capacity > 0 AND ${conditions};
       `;

@@ -66,13 +66,13 @@ routes.post("/online/flights/search", async function(request, response, next) {
   }
 });
 
-routes.get("/online/tickets/itineraries/:id", async function(
+routes.get("/online/tickets/itineraries", async function(
   request,
   response,
   next
 ) {
   try {
-    const itineraryId = request.params.id;
+    const itineraryId = request.query.id;
     const tickets = await onlineService.getTicketsByItineraryId(itineraryId);
     response.status(200);
     response.send(tickets);

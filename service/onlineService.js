@@ -3,7 +3,7 @@
 const itineraryDao = require("../dao/itineraryDao");
 const flightDao = require("../dao/flightDao");
 const ticketDao = require("../dao/ticketDao");
-const ApplicationError = require("../error/applicationError");
+const ApplicationError = require("../helpers/applicationError");
 
 function getItineraries() {
   return itineraryDao.getItineraries();

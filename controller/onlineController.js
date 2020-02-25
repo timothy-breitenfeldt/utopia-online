@@ -3,15 +3,15 @@
 const routes = require("express").Router();
 const db = require("../dao/db");
 const onlineService = require("../service/onlineService");
+const { ApplicationError, handleError } = require("../helper/error");
 
 routes.get("/online/itineraries", async function(request, response, next) {
   try {
     const itineraries = await onlineService.getItineraries();
     response.status(200);
     response.send(itineraries);
-    next();
   } catch (error) {
-    next(error);
+    handleError(error, next);
   }
 });
 
@@ -21,9 +21,8 @@ routes.post("/online/itineraries", async function(request, response, next) {
     const id = await onlineService.createItinerary(itinerary);
     response.status(201);
     response.send(id);
-    next();
   } catch (error) {
-    next(error);
+    handleError(error, next);
   }
 });
 
@@ -33,9 +32,8 @@ routes.get("/online/itineraries/:id", async function(request, response, next) {
     const itinerary = await onlineService.getItinerary(itineraryId);
     response.status(200);
     response.send(itinerary);
-    next();
   } catch (error) {
-    next(error);
+    handleError(error, next);
   }
 });
 
@@ -47,10 +45,9 @@ routes.delete("/online/itineraries/:id", async function(
   try {
     const itineraryId = request.params.id;
     await onlineService.cancelItinerary(itineraryId);
-    response.status(204).send();
-    next();
+    response.sendStatus(204);
   } catch (error) {
-    next(error);
+    handleError(error, next);
   }
 });
 
@@ -60,9 +57,8 @@ routes.post("/online/flights/search", async function(request, response, next) {
     const flights = await onlineService.getFlights(searchParameters);
     response.status(200);
     response.send(flights);
-    next();
   } catch (error) {
-    next(error);
+    handleError(error, next);
   }
 });
 
@@ -76,9 +72,8 @@ routes.get("/online/tickets/itineraries", async function(
     const tickets = await onlineService.getTicketsByItineraryId(itineraryId);
     response.status(200);
     response.send(tickets);
-    next();
   } catch (error) {
-    next(error);
+    handleError(error, next);
   }
 });
 

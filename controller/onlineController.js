@@ -19,6 +19,7 @@ routes.get("/online/itineraries", async function(request, response, next) {
 routes.post("/online/itineraries", async function(request, response, next) {
   try {
     const itinerary = request.body;
+    itinerary.user_id = request.user.id;
     const id = await onlineService.createItinerary(itinerary);
     response.status(201);
     response.send(id);

@@ -5,12 +5,30 @@ const config = require("config");
 const { ApplicationError } = require("../helper/error");
 
 function getItineraries(userId) {
-  return new Promise(function(resolve, reject) {
-    const sql =
-      "SELECT DISTINCT i.id, traveler_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE t.status = 'ACTIVE' AND user_id = ?;";
-    db.connection.query(sql, [userId], function(error, result) {
-      return error ? reject(error) : resolve(result);
-    });
+  return new Promise(async function(resolve, reject) {
+    try {
+      const sql =
+        "SELECT DISTINCT i.id, traveler_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE t.status = 'ACTIVE' AND user_id = ?;";
+      const itineraries = await new Promise(function(resolve, reject) {
+        db.connection.query(sql, [userId], function(error, result) {
+          return error ? reject(error) : resolve(result);
+        });
+      });
+      const promises = [];
+
+      itineraries.map(function(itinerary) {
+        promises.push(
+          _getTickets(itinerary.id).then(
+            tickets => (itinerary.tickets = tickets)
+          )
+        );
+      });
+
+      await Promise.all(promises);
+      return resolve(itineraries);
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
@@ -128,11 +146,33 @@ function _createTickets(tickets, itineraryId) {
 }
 
 function getItinerary(itineraryId, userId) {
-  return new Promise(function(resolve, reject) {
-    const sql =
-      "SELECT DISTINCT i.id, traveler_id, user_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE i.id = ? and t.status = 'ACTIVE' AND user_id = ?;";
+  return new Promise(async function(resolve, reject) {
+    try {
+      const sql =
+        "SELECT DISTINCT i.id, traveler_id, user_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE i.id = ? and t.status = 'ACTIVE' AND user_id = ?;";
 
-    db.connection.query(sql, [itineraryId, userId], function(error, result) {
+      const itinerary = await new Promise(function(resolve, reject) {
+        db.connection.query(sql, [itineraryId, userId], function(
+          error,
+          result
+        ) {
+          return error ? reject(error) : resolve(result);
+        });
+      });
+
+      const tickets = await _getTickets(itineraryId);
+      itinerary[0].tickets = tickets;
+      return resolve(itinerary[0]);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function _getTickets(itineraryId) {
+  return new Promise(function(resolve, reject) {
+    const sql = "SELECT * FROM ticket WHERE itinerary_id = ?;";
+    db.connection.query(sql, [itineraryId], function(error, result) {
       return error ? reject(error) : resolve(result);
     });
   });

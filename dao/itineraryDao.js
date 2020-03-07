@@ -2,12 +2,13 @@
 
 const db = require("./db");
 const config = require("config");
+const { ApplicationError } = require("../helper/error");
 
-function getItineraries() {
+function getItineraries(userId) {
   return new Promise(function(resolve, reject) {
     const sql =
-      "SELECT i.id, traveler_id, user_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE t.status = 'ACTIVE';";
-    db.connection.query(sql, function(error, result) {
+      "SELECT DISTINCT i.id, traveler_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE t.status = 'ACTIVE' AND user_id = ?;";
+    db.connection.query(sql, [userId], function(error, result) {
       return error ? reject(error) : resolve(result);
     });
   });
@@ -126,29 +127,48 @@ function _createTickets(tickets, itineraryId) {
   return Promise.all(promises);
 }
 
-function getItinerary(itineraryId) {
+function getItinerary(itineraryId, userId) {
   return new Promise(function(resolve, reject) {
     const sql =
-      "SELECT i.id, traveler_id, user_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE i.id = ? and t.status = 'ACTIVE';";
+      "SELECT DISTINCT i.id, traveler_id, user_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE i.id = ? and t.status = 'ACTIVE' AND user_id = ?;";
 
-    db.connection.query(sql, [itineraryId], function(error, result) {
+    db.connection.query(sql, [itineraryId, userId], function(error, result) {
       return error ? reject(error) : resolve(result);
     });
   });
 }
 
-function cancelItinerary(itineraryId) {
+function cancelItinerary(itineraryId, userId) {
   return new Promise(async function(resolve, reject) {
     try {
-      const sql = "UPDATE ticket SET status='CANCELED' WHERE itinerary_id = ?;";
+      const sql =
+        "UPDATE ticket INNER JOIN itinerary ON itinerary.id = ticket.itinerary_id SET status='CANCELED' WHERE itinerary_id = ? AND user_id = ?;";
 
       await db.connection.beginTransaction();
-      await db.connection.query(sql, [itineraryId]);
 
-      const flights = await _getFlightNumbers(itineraryId);
-      await _modifyFlightCapacities(flights, "INCREMENT");
-      await db.connection.commit();
-      return resolve();
+      const updateResult = await new Promise(function(resolve, reject) {
+        db.connection.query(sql, [itineraryId, userId], function(
+          error,
+          result
+        ) {
+          return error ? reject(error) : resolve(result);
+        });
+      });
+
+      if (updateResult.changedRows > 0) {
+        const flights = await _getFlightNumbers(itineraryId);
+        await _modifyFlightCapacities(flights, "INCREMENT");
+        await db.connection.commit();
+        return resolve();
+      } else {
+        db.connection.rollback(function(transactionError, result) {
+          return result
+            ? reject(
+                new ApplicationError(400, "Unable to cancel that itinerary")
+              )
+            : reject(transactionError);
+        });
+      }
     } catch (error) {
       db.connection.rollback(function(transactionError, result) {
         return result ? reject(error) : reject(transactionError);

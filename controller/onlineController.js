@@ -7,7 +7,8 @@ const { ApplicationError, handleError } = require("../helper/error");
 
 routes.get("/online/itineraries", async function(request, response, next) {
   try {
-    const itineraries = await onlineService.getItineraries();
+    const userId = request.user.id;
+    const itineraries = await onlineService.getItineraries(userId);
     response.status(200);
     response.send(itineraries);
   } catch (error) {
@@ -28,8 +29,9 @@ routes.post("/online/itineraries", async function(request, response, next) {
 
 routes.get("/online/itineraries/:id", async function(request, response, next) {
   try {
+    const userId = request.user.id;
     const itineraryId = request.params.id;
-    const itinerary = await onlineService.getItinerary(itineraryId);
+    const itinerary = await onlineService.getItinerary(itineraryId, userId);
     response.status(200);
     response.send(itinerary);
   } catch (error) {
@@ -43,8 +45,9 @@ routes.delete("/online/itineraries/:id", async function(
   next
 ) {
   try {
+    const userId = request.user.id;
     const itineraryId = request.params.id;
-    await onlineService.cancelItinerary(itineraryId);
+    await onlineService.cancelItinerary(itineraryId, userId);
     response.sendStatus(204);
   } catch (error) {
     handleError(error, next);
@@ -68,8 +71,12 @@ routes.get("/online/tickets/itineraries", async function(
   next
 ) {
   try {
+    const userId = request.user.id;
     const itineraryId = request.query.id;
-    const tickets = await onlineService.getTicketsByItineraryId(itineraryId);
+    const tickets = await onlineService.getTicketsByItineraryId(
+      itineraryId,
+      userId
+    );
     response.status(200);
     response.send(tickets);
   } catch (error) {

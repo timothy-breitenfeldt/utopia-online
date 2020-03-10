@@ -72,6 +72,10 @@ routes.get("/online/tickets/itineraries", async function(
   next
 ) {
   try {
+    if (!request.query && !request.query.id) {
+      throw new ApplicationError(400, "Missing ID in query parameters");
+    }
+
     const userId = request.user.id;
     const itineraryId = request.query.id;
     const tickets = await onlineService.getTicketsByItineraryId(
@@ -83,6 +87,11 @@ routes.get("/online/tickets/itineraries", async function(
   } catch (error) {
     handleError(error, next);
   }
+});
+
+//Health check
+routes.get("/online", function(request, response, next) {
+  response.sendStatus(200);
 });
 
 module.exports = routes;

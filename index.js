@@ -15,8 +15,9 @@ app.use(express.json());
 app.use(xss());
 app.get("/api/online/itineraries", verifyJwt);
 app.get("/api/online/tickets/itineraries/*", verifyJwt);
-app.post("/api/online/itineraries", verifyJwt);
 app.delete("/api/online/itineraries/*", verifyJwt);
+app.post("/api/online/itineraries", verifyJwt);
+app.post("/api/online/itineraries", verifyJwt);
 app.use("/api", routes);
 
 app.use((error, request, response, next) => {

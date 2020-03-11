@@ -25,18 +25,18 @@ function getItineraries(userId) {
 
         promises.push(
           _getTraveler(itinerary.traveler_id).then(
-            traveler => (itinerary.traveler = traveler[0])
+            traveler => (itinerary.traveler = traveler)
           )
         );
 
         promises.push(
-          _getUser(itinerary.user_id).then(user => (itinerary.user = user[0]))
+          _getUser(itinerary.user_id).then(user => (itinerary.user = user))
         );
 
         if (itinerary.agency_id) {
           promises.push(
             _getTravelAgency(itinerary.agency_id).then(
-              agency => (itinerary.agency = agency[0])
+              agency => (itinerary.agency = agency)
             )
           );
         }
@@ -173,7 +173,7 @@ function getItinerary(itineraryId, userId) {
       const sql =
         "SELECT DISTINCT i.id, traveler_id, user_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE i.id = ? and t.status = 'ACTIVE' AND user_id = ?;";
 
-      const itinerary = await new Promise(function(resolve, reject) {
+      const result = await new Promise(function(resolve, reject) {
         db.connection.query(sql, [itineraryId, userId], function(
           error,
           result
@@ -182,9 +182,23 @@ function getItinerary(itineraryId, userId) {
         });
       });
 
-      const tickets = await _getTickets(itineraryId);
-      itinerary[0].tickets = tickets;
-      return resolve(itinerary[0]);
+      if (result.length == 0) {
+        return resolve(result);
+      }
+
+      const itinerary = result[0];
+      itinerary.tickets = await _getTickets(itineraryId);
+      itinerary.traverler = await _getTraveler(itinerary.traveler_id);
+      itinerary.user = await _getUser(itinerary.user_id);
+
+      if (itinerary.agency_id) {
+        itinerary.agency = await _getTravelAgency(itinerary.agency_id);
+      }
+
+      delete itinerary.traveler_id;
+      delete itinerary.user_id;
+      delete itinerary.agency_id;
+      return resolve(itinerary);
     } catch (error) {
       reject(error);
     }
@@ -204,7 +218,7 @@ function _getTraveler(travelerId) {
   return new Promise(function(resolve, reject) {
     const sql = "SELECT * FROM traveler WHERE id = ?;";
     db.connection.query(sql, [travelerId], function(error, result) {
-      return error ? reject(error) : resolve(result);
+      return error ? reject(error) : resolve(result[0]);
     });
   });
 }
@@ -213,7 +227,7 @@ function _getTravelAgency(agencyId) {
   return new Promise(function(resolve, reject) {
     const sql = "SELECT * FROM travel_agency WHERE id = ?;";
     db.connection.query(sql, [agencyId], function(error, result) {
-      return error ? reject(error) : resolve(result);
+      return error ? reject(error) : resolve(result[0]);
     });
   });
 }
@@ -222,7 +236,7 @@ function _getUser(userId) {
   return new Promise(function(resolve, reject) {
     const sql = "SELECT * FROM user WHERE id = ?;";
     db.connection.query(sql, [userId], function(error, result) {
-      return error ? reject(error) : resolve(result);
+      return error ? reject(error) : resolve(result[0]);
     });
   });
 }

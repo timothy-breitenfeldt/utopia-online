@@ -25,18 +25,18 @@ function getItineraries(userId) {
 
         promises.push(
           _getTraveler(itinerary.traveler_id).then(
-            traveler => (itinerary.traveler = traveler)
+            traveler => (itinerary.traveler = traveler[0])
           )
         );
 
         promises.push(
-          _getUser(itinerary.user_id).then(user => (itinerary.user = user))
+          _getUser(itinerary.user_id).then(user => (itinerary.user = user[0]))
         );
 
         if (itinerary.agency_id) {
           promises.push(
             _getTravelAgency(itinerary.agency_id).then(
-              agency => (itinerary.agency = agency)
+              agency => (itinerary.agency = agency[0])
             )
           );
         }

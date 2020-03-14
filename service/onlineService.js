@@ -5,15 +5,15 @@ const flightDao = require("../dao/flightDao");
 const ticketDao = require("../dao/ticketDao");
 const { ApplicationError } = require("../helper/error");
 
-function getItineraries() {
-  return itineraryDao.getItineraries();
+function getItineraries(userId) {
+  return itineraryDao.getItineraries(userId);
 }
 
 function createItinerary(itinerary) {
   if (!itinerary) {
     throw new ApplicationError(400, "Request body cannot be empty");
   }
-  const expectedItinerary = ["traveler_id", "user_id", "agency_id", "tickets"];
+  const expectedItinerary = ["traveler_id", "user_id", "tickets"];
   const expectedTicket = ["flight_number", "seat_number", "price"];
 
   for (let key of expectedItinerary) {
@@ -24,7 +24,11 @@ function createItinerary(itinerary) {
       );
     }
   }
-  if (expectedItinerary.length != Object.keys(itinerary).length) {
+  //Add 1 to account for agency_id which could be included
+  if (
+    expectedItinerary.length != Object.keys(itinerary).length &&
+    expectedItinerary.length + 1 != Object.keys(itinerary).length
+  ) {
     throw new ApplicationError(
       400,
       "Invalid request, to many arguments in itinerary"
@@ -52,7 +56,7 @@ function createItinerary(itinerary) {
   return itineraryDao.createItinerary(itinerary);
 }
 
-function getItinerary(itineraryId) {
+function getItinerary(itineraryId, userId) {
   if (isNaN(itineraryId)) {
     throw new ApplicationError(400, "Itinerary ID must be a number");
   }
@@ -63,10 +67,10 @@ function getItinerary(itineraryId) {
     );
   }
 
-  return itineraryDao.getItinerary(itineraryId);
+  return itineraryDao.getItinerary(itineraryId, userId);
 }
 
-function cancelItinerary(itineraryId) {
+function cancelItinerary(itineraryId, userId) {
   if (isNaN(itineraryId)) {
     throw new ApplicationError(400, "Itinerary ID must be a number");
   }
@@ -77,7 +81,7 @@ function cancelItinerary(itineraryId) {
     );
   }
 
-  return itineraryDao.cancelItinerary(itineraryId);
+  return itineraryDao.cancelItinerary(itineraryId, userId);
 }
 
 function getFlights(searchParameters) {
@@ -103,7 +107,7 @@ function getFlights(searchParameters) {
   return flightDao.getFlights(searchParameters);
 }
 
-function getTicketsByItineraryId(itineraryId) {
+function getTicketsByItineraryId(itineraryId, userId) {
   if (isNaN(itineraryId)) {
     throw new ApplicationError(400, "Itinerary ID must be a number");
   }
@@ -114,7 +118,7 @@ function getTicketsByItineraryId(itineraryId) {
     );
   }
 
-  return ticketDao.getTicketsByItineraryId(itineraryId);
+  return ticketDao.getTicketsByItineraryId(itineraryId, userId);
 }
 
 module.exports = {

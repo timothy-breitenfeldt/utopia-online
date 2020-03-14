@@ -27,12 +27,16 @@ The default.yaml file can be empty, but the other profiles cannot. The structure
       "host": "localhost",
       "user": "root",
       "password": "password",
-      "database": "databasename"
+      "database": "databasename",
+      "multipleStatements": false
     },
 
     "application": {
       //this is an optional value, if no value is provided then no sales tax is applied.
       "salesTax": 0.065
+    },
+    "jwt": {
+      "secret": "secret"
     }
   }
 }

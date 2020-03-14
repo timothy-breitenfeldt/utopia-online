@@ -2,14 +2,55 @@
 
 const db = require("./db");
 const config = require("config");
+const { ApplicationError } = require("../helper/error");
 
-function getItineraries() {
-  return new Promise(function(resolve, reject) {
-    const sql =
-      "SELECT i.id, traveler_id, user_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE t.status = 'ACTIVE';";
-    db.connection.query(sql, function(error, result) {
-      return error ? reject(error) : resolve(result);
-    });
+function getItineraries(userId) {
+  return new Promise(async function(resolve, reject) {
+    try {
+      const sql =
+        "SELECT DISTINCT i.id, traveler_id, user_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE t.status = 'ACTIVE' AND user_id = ?;";
+      const itineraries = await new Promise(function(resolve, reject) {
+        db.connection.query(sql, [userId], function(error, result) {
+          return error ? reject(error) : resolve(result);
+        });
+      });
+      const promises = [];
+
+      itineraries.map(function(itinerary) {
+        promises.push(
+          _getTickets(itinerary.id).then(
+            tickets => (itinerary.tickets = tickets)
+          )
+        );
+
+        promises.push(
+          _getTraveler(itinerary.traveler_id).then(
+            traveler => (itinerary.traveler = traveler)
+          )
+        );
+
+        promises.push(
+          _getUser(itinerary.user_id).then(user => (itinerary.user = user))
+        );
+
+        if (itinerary.agency_id) {
+          promises.push(
+            _getTravelAgency(itinerary.agency_id).then(
+              agency => (itinerary.agency = agency)
+            )
+          );
+        }
+
+        delete itinerary.traveler_id;
+        delete itinerary.user_id;
+        delete itinerary.agency_id;
+      });
+
+      await Promise.all(promises);
+      return resolve(itineraries);
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
@@ -126,29 +167,111 @@ function _createTickets(tickets, itineraryId) {
   return Promise.all(promises);
 }
 
-function getItinerary(itineraryId) {
-  return new Promise(function(resolve, reject) {
-    const sql =
-      "SELECT i.id, traveler_id, user_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE i.id = ? and t.status = 'ACTIVE';";
+function getItinerary(itineraryId, userId) {
+  return new Promise(async function(resolve, reject) {
+    try {
+      const sql =
+        "SELECT DISTINCT i.id, traveler_id, user_id, agency_id, price_total, date_created FROM itinerary i JOIN ticket t ON i.id = t.itinerary_id WHERE i.id = ? and t.status = 'ACTIVE' AND user_id = ?;";
 
+      const result = await new Promise(function(resolve, reject) {
+        db.connection.query(sql, [itineraryId, userId], function(
+          error,
+          result
+        ) {
+          return error ? reject(error) : resolve(result);
+        });
+      });
+
+      if (result.length == 0) {
+        return resolve(result);
+      }
+
+      const itinerary = result[0];
+      itinerary.tickets = await _getTickets(itineraryId);
+      itinerary.traverler = await _getTraveler(itinerary.traveler_id);
+      itinerary.user = await _getUser(itinerary.user_id);
+
+      if (itinerary.agency_id) {
+        itinerary.agency = await _getTravelAgency(itinerary.agency_id);
+      }
+
+      delete itinerary.traveler_id;
+      delete itinerary.user_id;
+      delete itinerary.agency_id;
+      return resolve(itinerary);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function _getTickets(itineraryId) {
+  return new Promise(function(resolve, reject) {
+    const sql = "SELECT * FROM ticket WHERE itinerary_id = ?;";
     db.connection.query(sql, [itineraryId], function(error, result) {
       return error ? reject(error) : resolve(result);
     });
   });
 }
 
-function cancelItinerary(itineraryId) {
+function _getTraveler(travelerId) {
+  return new Promise(function(resolve, reject) {
+    const sql = "SELECT * FROM traveler WHERE id = ?;";
+    db.connection.query(sql, [travelerId], function(error, result) {
+      return error ? reject(error) : resolve(result[0]);
+    });
+  });
+}
+
+function _getTravelAgency(agencyId) {
+  return new Promise(function(resolve, reject) {
+    const sql = "SELECT * FROM travel_agency WHERE id = ?;";
+    db.connection.query(sql, [agencyId], function(error, result) {
+      return error ? reject(error) : resolve(result[0]);
+    });
+  });
+}
+
+function _getUser(userId) {
+  return new Promise(function(resolve, reject) {
+    const sql = "SELECT * FROM user WHERE id = ?;";
+    db.connection.query(sql, [userId], function(error, result) {
+      return error ? reject(error) : resolve(result[0]);
+    });
+  });
+}
+
+function cancelItinerary(itineraryId, userId) {
   return new Promise(async function(resolve, reject) {
     try {
-      const sql = "UPDATE ticket SET status='CANCELED' WHERE itinerary_id = ?;";
+      const sql =
+        "UPDATE ticket INNER JOIN itinerary ON itinerary.id = ticket.itinerary_id SET status='CANCELED' WHERE itinerary_id = ? AND user_id = ?;";
 
       await db.connection.beginTransaction();
-      await db.connection.query(sql, [itineraryId]);
 
-      const flights = await _getFlightNumbers(itineraryId);
-      await _modifyFlightCapacities(flights, "INCREMENT");
-      await db.connection.commit();
-      return resolve();
+      const updateResult = await new Promise(function(resolve, reject) {
+        db.connection.query(sql, [itineraryId, userId], function(
+          error,
+          result
+        ) {
+          return error ? reject(error) : resolve(result);
+        });
+      });
+
+      if (updateResult.changedRows > 0) {
+        const flights = await _getFlightNumbers(itineraryId);
+        await _modifyFlightCapacities(flights, "INCREMENT");
+        await db.connection.commit();
+        return resolve();
+      } else {
+        db.connection.rollback(function(transactionError, result) {
+          return result
+            ? reject(
+                new ApplicationError(400, "Unable to cancel that itinerary")
+              )
+            : reject(transactionError);
+        });
+      }
     } catch (error) {
       db.connection.rollback(function(transactionError, result) {
         return result ? reject(error) : reject(transactionError);

@@ -91,7 +91,7 @@ routes.get("/online/tickets/itineraries", async function(
 
 //Health check
 routes.get("/online", function(request, response, next) {
-  response.send("Health check").status(200);
+  response.send("Health check working").status(200);
 });
 
 module.exports = routes;
